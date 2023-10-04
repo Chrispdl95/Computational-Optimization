@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+
+def eliminate_kton_equal_constraints(filename,k):
+    import numpy as np
+    A,b,c,Eqin = mps_to_txt_matrixes(filename)
+    print('Before presolve:')
+    non_zeros=0
+    for i in range(len(A)):
+        for j in range(len(A[0])):
+            if A[i,j]!=0:
+                non_zeros +=1
+        
+    print('NonZeros:',non_zeros)
+    print('Rows :',len(A))
+    print('Columns:',len(A[0]))
+    c0=0
+    while k>1:
+        to_print=True 
+        for i in range(len(A)-1,-1,-1):
+            if np.count_nonzero(A[i,:],axis=0)== k and Eqin[i]==0 :
+                to_print= False 
+                for j in range(len(A[0])-1,-1,-1):
+                    if A[i,j] != 0:
+                        b[i]= b[i]/A[i,j]
+                        A[i,:]= A[i,:]/ A[i,j]
+                        if c[j] !=0 :
+                            c0 = c0 + c[j]*b[i]
+                            c=c-c[j]*A[i]
+                            Eqin[i] =-1
+                        for t in range(len(A)):
+                            if (t != i) and (A[t,j] != 0):
+                                b[t]=b[t]-A[t,j]*b[i]
+                                A[t]=A[t]-A[t,j]*A[i]
+                            
+                        A=np.delete(A,j,1)
+                        c=np.delete(c,j)
+                        break
+                    
+                break        
+        if to_print:
+            non_zeros=0
+            for i in range(len(A)):
+                for j in range(len(A[0])):
+                    if A[i,j]!=0:
+                        non_zeros +=1
+            print('k=',k)
+            print('NonZeros:',non_zeros)
+            print('Rows :',len(A))
+            print('Columns:',len(A[0]))
+            k-=1 
+    while k==1:
+        to_print=True
+        for i in range(len(A)-1,-1,-1):
+            if np.count_nonzero(A[i,:],axis=0)== k and Eqin[i]==0 :
+                to_print= False
+                for j in range(len(A[0])-1,-1,-1):
+                    if A[i,j] != 0:
+                        Xk=(b[i])/A[i,j]
+                        if Xk>=0:
+                            if c[j] != 0:
+                                c0 -= c[j]*(b[i]/(A[i,j]))
+                            for w in range(len(b)):
+                                b[w]-= Xk*A[w][j]
+                        else:
+                            print('THE PROBLEM IS INFEASIBLE')
+                    
+                        A=np.delete(A,i,0)
+                        A=np.delete(A,j,1)
+                        c=np.delete(c,j)
+                        Eqin=np.delete(Eqin,i)
+                        b=np.delete(b,i)
+                        break
+                break 
+        if to_print:
+            non_zeros=0
+            for i in range(len(A)):
+                for j in range(len(A[0])):
+                    if A[i,j]!=0:
+                        non_zeros +=1
+            print('k=',k)
+            print('NonZeros:',non_zeros)
+            print('Rows :',len(A))
+            print('Columns:',len(A[0]))
+            k-=1 
+                  
+                        
+
+
+
